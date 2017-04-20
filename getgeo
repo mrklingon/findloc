@@ -1,0 +1,10 @@
+cd /location for GEO-IP.txt file  # customize for local usage.
+
+rm GEO-IP.txt              GeoIPCountryCSV.zip     GeoIPCountryWhois.csv
+wget http://geolite.maxmind.com/download/geoip/database/GeoIPCountryCSV.zip
+
+unzip GeoIPCountryCSV.zip
+
+#sed 's/,/\o011/g' <GeoIPCountryWhois.csv >x
+tr '[,]' '[\t]'<GeoIPCountryWhois.csv >x
+sed 's/\"//g' <x>GEO-IP.txt
