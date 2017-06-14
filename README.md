@@ -8,4 +8,4 @@ NEEDED:
    2 then update findloc to have the correct file path. 
    3 Put findloc and getgeo into your command directory.
    
- NOTE: requires wget.
+ NOTE: requires wget, unzip.
