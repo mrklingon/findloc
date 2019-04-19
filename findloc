@@ -1,18 +1,19 @@
 #!/usr/bin/perl
 
-#USES DATA FROM http://geolite.maxmind.com/download/geoip/database/
-$DATALOC= "/location/of/data"; #customize to location used.
+#USES DATA FROM https://geolite.maxmind.com/download/geoip/database/GeoLite2-Country-CSV.zip
+
+$DATALOC= "/LOCATIONWHERE/GeoLite2/IS";
 $BEVERBOSE = 1;
 
-if (!defined ($ARGV[0])) {
-printf "\n";
-printf "findloc - find geographic IP location\n";
-printf "\n";
-printf "USAGE:   findloc [-v (default)]IP-Address [IP-Address [IP-Address...]]\n";
-printf "           report IP: country and country-code\n\n";
-printf "         findLOC.pl -r IP-Address [IP-Address [IP-Address...]]\n";
-printf "           just report country code: IP\n\n";
-printf "\n";
+if (!defined ($ARGV[0])) { 
+    printf "\n";
+    printf "findloc - find geographic IP location\n";
+    printf "\n";
+    printf "USAGE:   findloc [-v (default)]IP-Address [IP-Address [IP-Address...]]\n";
+    printf "           report IP: country and country-code\n\n";
+    printf "         findLOC.pl -r IP-Address [IP-Address [IP-Address...]]\n";
+    printf "           just report country code: IP\n\n";
+    printf "\n";
 }
 
 foreach $ip (@ARGV){
@@ -25,36 +26,45 @@ foreach $ip (@ARGV){
     if ($ip =~ /-v/){
         $BEVERBOSE = 1;
     } else {
-       &findIP($BLANDIP,$BEVERBOSE);
-      }
-   }
+        &findIP($BLANDIP,$BEVERBOSE);
+    }
+    }
 }
 
 
 
 sub findIP {
-  my ($IP,$VERBOSE)=@_;
+    my ($IP,$VERBOSE)=@_;
 
-  open IO, "cat $DATALOC/GEO-IP.txt|";
-#  open IO, "cat GEO-IP.test|";
+    open IO, "cat $DATALOC/GeoLite2-Country-Blocks-IPv4.csv|";
+    #  open IO, "cat GEO-IP.test|";
 
-  $IPnum = &ip2int($IP);
-#  printf "Looking for $IP ($IPnum)\n";
-  while (<IO>){
+    $IPnum = &ip2int($IP);
+    #  printf "Looking for $IP ($IPnum)\n";
+    $throwawy = <IO>;
+    while (<IO>){
     chomp;
-    ($firstIP,$secondIP,$firstNum,$secondNum,$Ccode,$Country)=split (/\t/);
-#    printf "$firstIP,$secondIP,$firstNum,$secondNum,$Ccode,$Country\n";
+    ($Network,$Geoname,$Geoname2,$secondNum,$Ccode,$Country)=split (/,/);
+    #    printf "$Network,$Geoname,$Geoname2,$secondNum,$Ccode,$Country\n";
+    ($firstIP,$block) = split(/\//,$Network);
+    $firstNum = &ip2int($firstIP);
+    $secondNum = $firstNum + 2 ** (32 - $block);
+
     if (($IPnum>=$firstNum) && ($IPnum<=$secondNum)){
-      #we found match
-    if ($VERBOSE){
-          printf "$IP is from $Country ($Ccode)\n";
-      }else{
-          printf "$Ccode:$IP\n";
-     }
-      close IO;
-      return;
+        #we found match
+        open CC, "grep $Geoname $DATALOC/GeoLite2-Country-Locations-en.csv|";
+        $CCode = <CC>;
+        chomp $CCode;
+        ($code,$language,$CCont,$Cont,$CC,$Country)=split(/,/,$CCode);
+        if ($VERBOSE){
+        printf "$IP is from $Country, ($CC), in $Cont\n";
+        }else{
+        printf "$CC:$IP\n";
+        }
+        close IO;
+        return;
     }
-  }
+    }
 }
 
 
@@ -89,5 +99,4 @@ sub int2ip {
     $ip .= "." . ($number & 0x000000ff);
     return $ip;
 }
-
 
